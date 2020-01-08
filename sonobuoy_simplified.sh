@@ -12,12 +12,14 @@
   # helpMsg
   # usage
   # ss_menu
+  # ss_menu_run
   # run_ss
 
 # Dependencies:
-  # jQuery
+  # jq
   # wget
 
+# TODO: Determine if jq == jquery
 
 install_sono() {
   printf "SS - Sonobuoy Installation \n"
@@ -52,10 +54,12 @@ install_sono() {
 }
 
 install_jq() {
-    printf "This will install jq \n"
-    #
-    #
-    # Stuff
+    # TODO: pull installation files from reliable source
+    printf "SS - Downloading jq from stedolan.github.io/jq/ \n"
+    wget "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64" -O "jq"
+    chmod +x "jq"
+    mv "jq" "$HOME"/bin/
+    printf "jQuery has been installed!"
 }
 
 run_sono() {
@@ -211,9 +215,13 @@ ss_menu() {
   printf "press q to exit Sonobuoy Simplified"
 }
 
+ss_menu_run() {
+  printf "Stuff"
+}
+
 run_ss() {
   printf "Welcome to the Sonobuoy Simplified Tool \n"
-  
+
   while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
     -h | --help )
       helpMsg
@@ -254,5 +262,10 @@ run_ss() {
   exit
 }
 
-# This is where the program runs
-run_ss "$@"
+# "Main"
+if [[ $1 == '' ]];
+then
+  ss_menu_run
+else
+  run_ss "$@"
+fi
