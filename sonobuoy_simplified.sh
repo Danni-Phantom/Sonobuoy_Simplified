@@ -25,8 +25,8 @@ install_sono() {
   printf "SS - Sonobuoy Installation \n"
 
   # Default values for sonobuoy installation
-  VERSION="0.16.1"
-  OS="darwin"
+  VERSION="0.17.1"
+  OS="linux"
   # TODO:Test that the prompting for information displays correctly
   printf "VERSION [Default: %s]: " "$VERSION"
   read -r rVERSION
@@ -45,11 +45,12 @@ install_sono() {
 
   printf "Downloading Sonobuoy from Offical Github Repository \n"
   wget "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${VERSION}/sonobuoy_${VERSION}_${OS}_amd64.tar.gz"
-  sono_install_zip=$(("sonobuoy_" + VERSION + "_" + OS + "_amd64.tar.gz"))
-  printf "Decompressing sonobuoy files and installing"
-  tar -xzf "$HOME"/bin/"$sono_install_zip" -C "$HOME"/bin
-  chmod +x "$HOME"/bin/sonobuoy
-  printf "Sonobuoy has been installed!"
+  sono_install_zip="sonobuoy_" + $VERSION + "_" + $OS + "_amd64.tar.gz"
+  printf "Decompressing sonobuoy files and installing \n"
+  tar -xf "$sono_install_zip"
+  chmod +x sonobuoy
+  sudo mv "sonobuoy" /usr/bin/
+  printf "Sonobuoy has been installed! \n"
 
 }
 
@@ -58,8 +59,8 @@ install_jq() {
     printf "SS - Downloading jq from stedolan.github.io/jq/ \n"
     wget "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64" -O "jq"
     chmod +x "jq"
-    mv "jq" "$HOME"/bin/
-    printf "jQuery has been installed!"
+    sudo mv "jq" /usr/bin/
+    printf "jQuery has been installed! \n"
 }
 
 run_sono() {
@@ -68,7 +69,8 @@ run_sono() {
   printf "1. Non-Disruptive-Conformance \n"
   printf "2. Quick \n"
   printf "3. CertifiedConformance \n"
-  printf "Press q to exit Sonobuoy Simplified \n"
+  printf "4. Go To Main Menu \n"
+  printf "Press 0 to exit Sonobuoy Simplified \n"
 
 
   read -r -n 1 ans
@@ -81,23 +83,26 @@ run_sono() {
 
   case "$ans" in
     1 )
-      printf "SS - Running Non-Disruptive-Conformance Test!"
+      printf "SS - Running Non-Disruptive-Conformance Test! \n"
       sonobuoy run --wait  &
     ;;
     2 )
-      printf "SS - Running Quick Test!"
+      printf "SS - Running Quick Test! \n"
       sonobuoy run --wait --mode quick &
     ;;
     3 )
-      printf "SS - Running Certified-Conformance Test!"
+      printf "SS - Running Certified-Conformance Test! \n"
       sonobuoy run --wait --mode certified-conformance &
     ;;
-    Q | q )
-      printf "Exiting..."
+    4 )
+      ss_menu_run
+    ;;
+    0 | q )
+      printf "Exiting... \n"
       exit
     ;;
     * )
-      printf "Invalid input %s" "$ans"
+      printf "Invalid input %s \n" "$ans"
       run_sono
     ;;
   esac
@@ -110,52 +115,42 @@ get_results() {
   printf "Name of new directory:"
   read -r dir_s
   printf "\n"
-
   if [[ "$dir_s" == '' ]]; then
    dir_s="sonobuoy_results_$(date +%F)_$(date +%H)_$(date +%M)"
   fi
-
   output=$(sonobuoy retrieve)
   mkdir ./"$dir_s"
   tar xzf "$output" -C ./"$dir_s"
-
-  exit
 }
 
 pretty_results() {
-  printf "SS - Generating Sonobuoy Report"
-
+  printf "SS - Generating Sonobuoy Report \n"
   results=$(sonobuoy retrieve)
-
   printf "Save results to file? "
   read -r -n 1 YoN
   printf "\n"
-
   if [[ $YoN == 'Y'  || $YoN == 'y' ]]; then {
     printf "File Name: "
     read -r fileName
     printf "\n"
-
     if [[ "$fileName" == '' ]]; then
         fileName="sonobuoy_report_$(date +%F)_$(date +%H)_$(date +%M)"
     fi
-
     sonobuoy results "$results" >> "$fileName".txt
     sonobuoy results "$results"
-
-    exit;
   }
   else
     sonobuoy results "$results"
-    exit;
   fi
 
 }
 
 status() {
   printf "SS - Status of Sonobuoy Testing \n"
-  sonobuoy status --json | jq
-  printf "testing"
+  sonobuoy status --json | jq >> "jq_$(date +%F)_$(date +%H)_$(date +%M)".json
+
+
+  printf "testing \n"
 
   # idea for how to display status...
     # while [[ flag -eq 1 ]]; do {
@@ -169,24 +164,22 @@ delete() {
   printf "SS - Deleting Sonobuoy namespace \n"
   sonobuoy delete --wait
   printf "\n"
-  exit
 }
 
 more_info() {
   printf "SS - Information on Sonobuoy \n"
   sonobuoy -h
-  exit
 }
 
 helpMsg() {
   printf "Sonobuoy Simplified \n"
-  printf "The purpose of this script is to be able to run the kubernetes conformance tool sonobuoy without having to become familiar with the intracacies of the options and tools that it provides. \n"
+  printf "The purpose of this script is to be able to run the kubernetes conformance tool sonobuoy without having to become familiar with the intracacies of the options and tools that it provides. It can be run via commandline or via an option menu \n"
   printf "More information on Sonobuoy can be found at https://sonobuoy.io/ \n\n"
   usage
   printf "Options: \n"
   printf "\t -r \t --run \t\t displays options and runs sonobuoy tool \n"
   printf "\t -i \t --install \t install the sonobuoy tool \n"
-  printf "\t -j \t --install-jquery \t installs jQuery for additinal functionality in getting status of sonobuoy run"
+  printf "\t -j \t --install-jquery \t installs jQuery for additinal functionality in getting status of sonobuoy run \n"
   printf "\t -g \t --get-results \t this gets the full dump results generated by sonobuoy after the tool is run \n"
   printf "\t -p \t --pretty \t this gets the condensed results generated by the sonobuoy tool \n"
   printf "\t -s \t --status \t this displays the current status of the sonobuoy test being run. A full run can take several hours* \n"
@@ -194,7 +187,6 @@ helpMsg() {
   printf "\t -m \t --more-info \t this prints the help page for the main sonobuoy executable \n"
   printf "\t -h \t --help \t help \t displays this help message \n"
   printf "\n *jq package needs to be installed for some functionalities* \n"
-  exit
 }
 
 usage() {
@@ -202,21 +194,61 @@ usage() {
 }
 
 ss_menu() {
-  printf "SS - Sonobuoy Simplified"
-  printf "1. Run Sonobuoy"
-  printf "2. Install Sonobuoy"
-  printf "3. Install jQuery for Additional Functionality"
-  printf "4. Get Sonobuoy Full Results"
-  printf "5. Get Sonobuoy Report"
-  printf "6. Get Stutus of Running Sonobuoy Test"
-  printf "7. Delete existing Sonobuoy namespace"
-  printf "8. Get More Information on Sonobuoy"
-  printf "9. Sonobuoy Simplified Help"
-  printf "press q to exit Sonobuoy Simplified"
+  printf "SS - Sonobuoy Simplified \n"
+  printf "1. Run Sonobuoy \n"
+  printf "2. Install Sonobuoy \n"
+  printf "3. Install jQuery for Additional Functionality \n"
+  printf "4. Get Sonobuoy Full Results \n"
+  printf "5. Get Sonobuoy Report \n"
+  printf "6. Get Stutus of Running Sonobuoy Test \n"
+  printf "7. Delete existing Sonobuoy namespace \n"
+  printf "8. Get More Information on Sonobuoy \n"
+  printf "9. Sonobuoy Simplified Help \n"
+  printf "press 0 to exit Sonobuoy Simplified \n"
 }
 
 ss_menu_run() {
-  printf "Stuff"
+  cont=true
+  while $cont; do {
+    ss_menu
+    read -r -n 1 choice
+    printf "\n"
+  if [ "$choice" -eq 1 ]; then {
+      run_sono
+    }
+  elif [ "$choice" -eq 2 ]; then {
+      install_sono
+    }
+  elif [ "$choice" -eq 3 ]; then {
+      install_jq
+    }
+  elif [ "$choice" -eq 4 ]; then {
+      get_results
+    }
+  elif [ "$choice" -eq 5 ]; then {
+      pretty_results
+    }
+  elif [ "$choice" -eq 6 ]; then {
+      status
+    }
+  elif [ "$choice" -eq 7 ]; then {
+      delete
+    }
+  elif [ "$choice" -eq 8 ]; then {
+      more_info
+    }
+  elif [ "$choice" -eq 9 ]; then {
+      helpMsg
+    }
+  elif [ "$choice" -eq 0 ]; then {
+      cont=false
+    }
+    else
+      printf "Invalid choice \n"
+    fi
+    printf "\n"
+  } done
+exit
 }
 
 run_ss() {
