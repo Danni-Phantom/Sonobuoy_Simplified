@@ -19,15 +19,13 @@
   # jq
   # wget
 
-# TODO: Determine if jq == jquery
-
 install_sono() {
   printf "SS - Sonobuoy Installation \n"
 
   # Default values for sonobuoy installation
   VERSION="0.17.1"
   OS="linux"
-  # TODO:Test that the prompting for information displays correctly
+
   printf "VERSION [Default: %s]: " "$VERSION"
   read -r rVERSION
   if [[ $rVERSION != '' ]];
@@ -60,7 +58,6 @@ install_sono() {
 }
 
 install_jq() {
-    # TODO: pull installation files from reliable source
     printf "SS - Downloading jq from stedolan.github.io/jq/ \n"
     printf "This will install jq version 1.6 - if a newer version exists, \n"
     printf "Please modify the script to fit your needs \n"
@@ -76,7 +73,8 @@ run_sono() {
   printf "1. Non-Disruptive-Conformance \n"
   printf "2. Quick \n"
   printf "3. CertifiedConformance \n"
-  printf "4. Go To Main Menu \n"
+  printf "4. Information about each test"
+  printf "5. Go To Main Menu \n"
   printf "Press 0 to exit Sonobuoy Simplified \n"
 
 
@@ -102,6 +100,17 @@ run_sono() {
       sonobuoy run --wait --mode certified-conformance &
     ;;
     4 )
+      printf "Non-Disruptive-Conformance \n"
+      printf "This is the default mode and will run all the tests in the e2e plugin which are marked Conformance which are known to not be disruptive to other workloads in your cluster. This mode is ideal for checking that an existing cluster continues to behave is conformant manner. \n"
+
+      printf "Quick \n"
+      printf "This mode will run a single test from the e2e test suite which is known to be simple and fast. Use this mode as a quick check that the cluster is responding and reachable. \n"
+
+      printf "Certified-Conformance \n"
+      printf "This mode runs all of the Conformance tests and is the mode used when applying for the Certified Kubernetes Conformance Program. Some of these tests may be disruptive to other workloads so it is not recommended that you run this mode on production clusters. In those situations, use the default \"non-disruptive-conformance\" mode. \n"
+
+    ;;
+    5 )
       ss_menu_run
     ;;
     0 | q )
@@ -133,7 +142,7 @@ get_results() {
 pretty_results() {
   printf "SS - Generating Sonobuoy Report \n"
   results=$(sonobuoy retrieve)
-  printf "Save results to file? "
+  printf "Save results to file? (y/n) "
   read -r -n 1 YoN
   printf "\n"
   if [[ $YoN == 'Y'  || $YoN == 'y' ]]; then {
@@ -182,8 +191,8 @@ status() {
 
 delete() {
   printf "SS - Deleting Sonobuoy namespace \n"
-  sonobuoy delete --wait
-  printf "\n"
+  sonobuoy delete
+  printf "\n Deletion Complete! \n"
 }
 
 more_info() {
