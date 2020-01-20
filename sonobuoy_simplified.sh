@@ -45,11 +45,16 @@ install_sono() {
 
   printf "Downloading Sonobuoy from Offical Github Repository \n"
   wget "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${VERSION}/sonobuoy_${VERSION}_${OS}_amd64.tar.gz"
-  sono_install_zip="sonobuoy_" + $VERSION + "_" + $OS + "_amd64.tar.gz"
+  sono_install_zip="sonobuoy_"
+  sono_install_zip+=$VERSION
+  sono_install_zip+="_"
+  sono_install_zip+=$OS
+  sono_install_zip+="_amd64.tar.gz"
   printf "Decompressing sonobuoy files and installing \n"
   tar -xf "$sono_install_zip"
   chmod +x sonobuoy
   sudo mv "sonobuoy" /usr/bin/
+  rm $sono_install_zip "LICENSE"
   printf "Sonobuoy has been installed! \n"
 
 }
@@ -57,6 +62,8 @@ install_sono() {
 install_jq() {
     # TODO: pull installation files from reliable source
     printf "SS - Downloading jq from stedolan.github.io/jq/ \n"
+    printf "This will install jq version 1.6 - if a newer version exists, \n"
+    printf "Please modify the script to fit your needs \n"
     wget "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64" -O "jq"
     chmod +x "jq"
     sudo mv "jq" /usr/bin/
@@ -147,17 +154,30 @@ pretty_results() {
 
 status() {
   printf "SS - Status of Sonobuoy Testing \n"
-  sonobuoy status --json | jq >> "jq_$(date +%F)_$(date +%H)_$(date +%M)".json
-
-
-  printf "testing \n"
-
-  # idea for how to display status...
-    # while [[ flag -eq 1 ]]; do {
-    # sleep 1
-    # sonobuoy status | grep -Po '"total":.*?[^\\]",'
-    # wait && (flag=0 || flag=1)
-    # } done
+  #jfile="jq_$(date +%F)_$(date +%H)_$(date +%M)".json
+  printf "Sonobuoy is: "
+  sonobuoy status --json | jq -r '.status'
+  printf "\n"
+  printf "1. More info, 2. Refresh, 3. Main Menu, 4.Exit \n"
+  read -r -n 1 YoNs
+  case "$YoNs" in
+    1 )
+      sonobuoy status --json | jq .
+    ;;
+    2 )
+      status
+    ;;
+    3 )
+      ss_menu_run
+    ;;
+    4 | 0 | q)
+      exit
+    ;;
+    * )
+      printf "Invalid input %s \n" "$ans"
+      status
+    ;;
+  esac
 }
 
 delete() {
